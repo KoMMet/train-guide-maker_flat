@@ -233,31 +233,18 @@ document.getElementById('copy').addEventListener('click', () => {
 
 document.getElementById('x').addEventListener('click', () => {
   const text = `${val('dest')} 車内案内図を作りました #車内案内図メーカー（仮）`;
-  const blobP = new Promise(res => cv.toBlob(res, 'image/png'));
-  const intent = () => {
-    const u = new URL('https://x.com/intent/post');
-    u.searchParams.set('text', text);
-    return u.href;
-  };
-  // 画像添付: スマホ等はWeb Share APIでXアプリに画像ごと渡す
-  blobP.then(blob => {
-    const file = new File([blob], 'train-guide.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      say('共有先の一覧でXを選ぶと、画像つきの投稿画面が開きます。');
-      return navigator.share({ files: [file], text }).then(() => say('共有しました'), e => {
-        if (e && e.name !== 'AbortError') say('共有に失敗しました');
-      });
-    }
-    // PC: 画像を自動コピーして投稿画面を開く。投稿欄で貼り付けると画像が載る
-    if (navigator.clipboard && window.ClipboardItem) {
-      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(
-        () => say('画像をコピーしました。Xの投稿欄で貼り付け(Ctrl+V / ⌘V)すると画像が載ります。'),
-        () => say(pcOnly('画像のコピーに失敗しました。画像をダウンロードして添付してください。')));
-    }
+  const u = new URL('https://x.com/intent/post');
+  u.searchParams.set('text', text);
+  // ユーザー操作中に同期的に開く(ポップアップブロック回避)
+  window.open(u.href, '_blank', 'noopener,noreferrer');
+  // 画像は自動コピーし、投稿欄での貼り付けで添付できる
+  if (navigator.clipboard && window.ClipboardItem) {
+    const item = new ClipboardItem({ 'image/png': new Promise(res => cv.toBlob(res, 'image/png')) });
+    navigator.clipboard.write([item]).then(
+      () => say('画像をコピーしました。Xの投稿欄で貼り付けると画像が載ります。'),
+      () => say(pcOnly('画像のコピーに失敗しました。画像をダウンロードして添付してください。')));
+  } else {
     say(pcOnly('画像をダウンロードして添付してください。'));
-  });
-  if (!(navigator.canShare && navigator.share && isMobile)) {
-    window.open(intent(), '_blank', 'noopener,noreferrer');
   }
 });
 

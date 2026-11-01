@@ -2,6 +2,7 @@
 const W = 1280, H = 720, S = 3;
 const FONT = '"Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif';
 const MAX_STATIONS = 30;
+const SITE_URL = 'https://kommet.github.io/train-guide-maker_flat/';
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const listEl = document.getElementById('list');
@@ -164,7 +165,7 @@ function combo(input, onPick) {
   let showAll = true;
   const refresh = () => {
     const q = input.value.trim();
-    const hits = TOKYO_STATIONS.filter(n => showAll || !q || n.includes(q)).slice(0, 60);
+    const hits = STATIONS.filter(n => showAll || !q || n.startsWith(q)).slice(0, 60);
     ul.replaceChildren(...hits.map(n => {
       const li = mk('li', { textContent: n });
       li.setAttribute('role', 'option');
@@ -252,7 +253,6 @@ document.getElementById('dl').addEventListener('click', () => {
 const msg = document.getElementById('msg');
 const say = t => { msg.textContent = t; };
 const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-const pcOnly = t => (isMobile ? '' : t);
 
 document.getElementById('copy').addEventListener('click', () => {
   if (!navigator.clipboard || !window.ClipboardItem) { say('このブラウザでは画像コピーに未対応です。ダウンロードをご利用ください。'); return; }
@@ -261,27 +261,20 @@ document.getElementById('copy').addEventListener('click', () => {
 });
 
 document.getElementById('x').addEventListener('click', () => {
-  const text = `${val('dest')} 車内案内図を作りました #車内案内図メーカー（仮）`;
+  const text = '車内案内図を作りました #車内案内図メーカー（仮）';
   const u = new URL('https://x.com/intent/post');
   u.searchParams.set('text', text);
+  u.searchParams.set('url', SITE_URL);
   if (isMobile) {
     // アプリを直接起動。起動できなければWeb版へ
     const t = setTimeout(() => { if (!document.hidden) location.href = u.href; }, 1200);
     document.addEventListener('visibilitychange', () => clearTimeout(t), { once: true });
-    location.href = 'twitter://post?message=' + encodeURIComponent(text);
+    location.href = 'twitter://post?message=' + encodeURIComponent(text + '\n' + SITE_URL);
   } else {
     // ユーザー操作中に同期的に開く(ポップアップブロック回避)
     window.open(u.href, '_blank', 'noopener,noreferrer');
   }
-  // 画像は自動コピーし、投稿欄での貼り付けで添付できる
-  if (navigator.clipboard && window.ClipboardItem) {
-    const item = new ClipboardItem({ 'image/png': new Promise(res => cv.toBlob(res, 'image/png')) });
-    navigator.clipboard.write([item]).then(
-      () => say('画像をコピーしました。Xの投稿欄で貼り付けると画像が載ります。'),
-      () => say(pcOnly('画像のコピーに失敗しました。画像をダウンロードして添付してください。')));
-  } else {
-    say(pcOnly('画像をダウンロードして添付してください。'));
-  }
+  say('Xの投稿画面を開きました。サイトのリンクカードに画像が表示されます。作成した画像は「ダウンロード」または「画像をコピー」で添付できます。');
 });
 
 buildList();

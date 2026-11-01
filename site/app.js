@@ -153,6 +153,7 @@ function mk(tag, props, ...kids) {
   return e;
 }
 
+function flag(label, input) { return mk('label', { className: 'flag' }, input, label); }
 function field(label, input) { return mk('label', {}, label, input); }
 
 // 駅名の候補プルダウン(フォーカスで一覧、入力で絞り込み)
@@ -263,11 +264,9 @@ function buildList() {
     const del = mk('button', { type: 'button', textContent: '削除', title: '削除' });
     del.addEventListener('click', () => remove(i));
     const row = mk('div', { className: 'row' },
-      field('次', radio), field('駅名', nameBox), field('番号', num), field('所要分', min),
+      mk('div', { className: 'flags' }, flag('次の駅', radio), flag('通過済', pass)), field('駅名', nameBox), field('番号', num), field('所要分', min),
       field('乗換 (改行区切り)', tr),
       mk('div', { className: 'btns' }, up, dn, del));
-    const pl = field('通過済(灰色)', pass); pl.className = 'chk';
-    row.append(pl);
     listEl.append(row);
   });
 }

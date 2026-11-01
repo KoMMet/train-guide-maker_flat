@@ -184,6 +184,60 @@ function combo(input, onPick) {
   return box;
 }
 
+// 路線→駅の順に選ぶポップアップ
+function openPicker(onPick) {
+  const opener = document.activeElement;
+  const back = mk('div', { className: 'backdrop' });
+  const dlg = mk('div', { className: 'modal' });
+  dlg.setAttribute('role', 'dialog');
+  dlg.setAttribute('aria-modal', 'true');
+  const title = mk('h3');
+  const search = mk('input', { type: 'text', placeholder: '路線名で検索', maxLength: 20 });
+  const body = mk('div', { className: 'modal-body' });
+  const prev = mk('button', { type: 'button', textContent: '← 路線一覧', hidden: true });
+  const close = mk('button', { type: 'button', textContent: '閉じる' });
+  const head = mk('div', { className: 'modal-head' }, prev, title, close);
+  dlg.append(head, search, body);
+  back.append(dlg);
+  document.body.append(back);
+
+  const done = () => { back.remove(); if (opener && opener.focus) opener.focus(); };
+  close.addEventListener('click', done);
+  back.addEventListener('pointerdown', ev => { if (ev.target === back) done(); });
+  back.addEventListener('keydown', ev => { if (ev.key === 'Escape') done(); });
+
+  const showLines = () => {
+    title.textContent = '路線を選択';
+    prev.hidden = true; search.hidden = false; search.placeholder = '路線名で検索';
+    const q = search.value.trim();
+    const frag = [];
+    let op = null;
+    LINES.filter(l => !q || l.n.includes(q) || l.o.includes(q)).forEach(l => {
+      if (l.o !== op) { op = l.o; frag.push(mk('h4', { textContent: op })); }
+      const b = mk('button', { type: 'button', className: 'item', textContent: l.n });
+      b.addEventListener('click', () => showStations(l));
+      frag.push(b);
+    });
+    if (!frag.length) frag.push(mk('p', { textContent: '該当する路線がありません' }));
+    body.replaceChildren(...frag);
+    body.scrollTop = 0;
+  };
+  const showStations = l => {
+    title.textContent = l.n + ' — 駅を選択';
+    prev.hidden = false; search.hidden = true;
+    body.replaceChildren(...l.s.map(n => {
+      const b = mk('button', { type: 'button', className: 'item', textContent: n });
+      b.addEventListener('click', () => { onPick(n); done(); });
+      return b;
+    }));
+    body.scrollTop = 0;
+  };
+  prev.addEventListener('click', showLines);
+  search.addEventListener('input', showLines);
+  showLines();
+  search.focus();
+}
+
 function buildList() {
   listEl.replaceChildren();
   stations.forEach((st, i) => {
@@ -192,6 +246,9 @@ function buildList() {
     const name = mk('input', { type: 'text', maxLength: 12, value: st.name, placeholder: '駅名を入力して検索' });
     name.autocomplete = 'off';
     const nameBox = combo(name, v => { st.name = v; render(); });
+    const pick = mk('button', { type: 'button', className: 'pick', textContent: '路線から選ぶ' });
+    pick.addEventListener('click', () => openPicker(v => { name.value = v; st.name = v; render(); }));
+    nameBox.append(pick);
     const num = mk('input', { type: 'text', maxLength: 3, value: st.num });
     num.addEventListener('input', () => { st.num = num.value; render(); });
     const min = mk('input', { type: 'text', maxLength: 3, value: st.min });

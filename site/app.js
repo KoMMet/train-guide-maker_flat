@@ -243,6 +243,7 @@ document.getElementById('x').addEventListener('click', () => {
   blobP.then(blob => {
     const file = new File([blob], 'train-guide.png', { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      say('共有先の一覧でXを選ぶと、画像つきの投稿画面が開きます。');
       return navigator.share({ files: [file], text }).then(() => say('共有しました'), e => {
         if (e && e.name !== 'AbortError') say('共有に失敗しました');
       });

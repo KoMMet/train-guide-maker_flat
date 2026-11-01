@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>車内案内図メーカー（仮）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1>車内案内図メーカー（仮）</h1></header>
+<main>
+  <section class="preview">
+    <canvas id="cv" width="1280" height="720"></canvas>
+    <div class="actions">
+      <button id="dl" type="button">PNGをダウンロード</button>
+      <button id="copy" type="button">画像をコピー</button>
+      <button id="x" type="button">Xで共有</button>
+    </div>
+    <p id="msg" role="status"></p>
+  </section>
+  <section class="panel">
+    <h2>基本設定</h2>
+    <div class="grid">
+      <label>行先<input id="dest" maxlength="20" value="横浜 ゆき"></label>
+      <label>号車<input id="car" maxlength="2" value="3"></label>
+      <label>路線色<input id="color" type="color" value="#0068b7"></label>
+      <label>路線記号<input id="prefix" maxlength="3" value="TY"></label>
+      <label>「つぎは」表記<input id="nextlabel" maxlength="8" value="つぎは"></label>
+      <label>「分」表記<input id="minlabel" maxlength="2" value="分"></label>
+    </div>
+    <h2>駅一覧 <small>(上から順に画面左→右。左が進行方向)</small></h2>
+    <div id="list"></div>
+    <button id="add" type="button">＋ 駅を追加</button>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

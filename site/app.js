@@ -5,6 +5,10 @@ const MAX_STATIONS = 30;
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const listEl = document.getElementById('list');
+const dl = document.createElement('datalist');
+dl.id = 'station-names';
+TOKYO_STATIONS.forEach(n => dl.append(Object.assign(document.createElement('option'), { value: n })));
+document.body.append(dl);
 
 let stations = [
   { name: '日吉', num: '13', min: '12', passed: false, tr: '' },
@@ -160,7 +164,9 @@ function buildList() {
   stations.forEach((st, i) => {
     const radio = mk('input', { type: 'radio', name: 'next', checked: i === nextIdx, title: '次の駅' });
     radio.addEventListener('change', () => { nextIdx = i; render(); });
-    const name = mk('input', { type: 'text', maxLength: 12, value: st.name });
+    const name = mk('input', { type: 'text', maxLength: 12, value: st.name, placeholder: '駅名を入力して検索' });
+    name.setAttribute('list', 'station-names');
+    name.autocomplete = 'off';
     name.addEventListener('input', () => { st.name = name.value; render(); });
     const num = mk('input', { type: 'text', maxLength: 3, value: st.num });
     num.addEventListener('input', () => { st.num = num.value; render(); });

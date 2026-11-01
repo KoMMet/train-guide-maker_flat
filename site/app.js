@@ -137,6 +137,7 @@ function render() {
       ctx.fillRect(cxx - slot / 2 + 2, by + 2, slot - 4, bh - 4);
     }
   });
+  refreshBlob();
 }
 
 function roundRect(x, y, w, h, r) {
@@ -309,10 +310,61 @@ const msg = document.getElementById('msg');
 const say = t => { msg.textContent = t; };
 const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
+// 描画のたびにPNGを先に作っておき、クリック時に同期的にクリップボードへ渡せるようにする
+// (iOS Safari などはユーザー操作中に非同期処理を挟むとコピーを拒否しやすい)
+let pngBlob = null, blobTimer = 0, blobGen = 0;
+function refreshBlob() {
+  pngBlob = null;
+  clearTimeout(blobTimer);
+  const gen = ++blobGen;
+  blobTimer = setTimeout(() => cv.toBlob(b => { if (gen === blobGen) pngBlob = b; }, 'image/png'), 200);
+}
+const getBlob = () => pngBlob || new Promise(res => cv.toBlob(res, 'image/png'));
+
+function copyImage() {
+  if (!navigator.clipboard || !window.ClipboardItem) return Promise.resolve(false);
+  try {
+    const item = new ClipboardItem({ 'image/png': getBlob() });
+    return navigator.clipboard.write([item]).then(() => true, () => false);
+  } catch (e) {
+    return Promise.resolve(false);
+  }
+}
+
+function canShareFile() {
+  if (!navigator.canShare) return false;
+  try {
+    return navigator.canShare({ files: [new File([new Blob()], 'x.png', { type: 'image/png' })] });
+  } catch (e) {
+    return false;
+  }
+}
+
+function shareImage() {
+  return Promise.resolve(getBlob()).then(b => navigator.share({
+    files: [new File([b], 'train-guide.png', { type: 'image/png' })],
+  }));
+}
+
+let useShare = false;
+const SHARE_HINT = '共有メニューの「コピー」(または「画像を保存」)を選んでください。';
+function openShare() {
+  return shareImage().then(() => say('共有メニューで「コピー」を選んだ場合は画像がコピーされています。'), err => {
+    if (err && err.name === 'AbortError') { say(SHARE_HINT); return; }
+    useShare = true;
+    say('もう一度「画像をコピー」を押すと共有メニューが開きます。' + SHARE_HINT);
+  });
+}
+
 document.getElementById('copy').addEventListener('click', () => {
-  if (!navigator.clipboard || !window.ClipboardItem) { say('このブラウザでは画像コピーに未対応です。ダウンロードをご利用ください。'); return; }
-  const item = new ClipboardItem({ 'image/png': new Promise(res => cv.toBlob(res, 'image/png')) });
-  navigator.clipboard.write([item]).then(() => say('画像をコピーしました'), () => say('コピーに失敗しました'));
+  if (useShare) { say(SHARE_HINT); openShare(); return; }
+  copyImage().then(ok => {
+    if (ok) { say('画像をコピーしました'); return; }
+    if (!canShareFile()) { say('このブラウザでは画像コピーに未対応です。ダウンロードをご利用ください。'); return; }
+    // クリップボードへの画像書き込みが拒否された端末(主にiPhone)は共有メニューからコピーする
+    say(SHARE_HINT);
+    openShare();
+  });
 });
 
 document.getElementById('x').addEventListener('click', () => {
@@ -321,11 +373,7 @@ document.getElementById('x').addEventListener('click', () => {
   u.searchParams.set('text', text);
   u.searchParams.set('url', location.origin + location.pathname);
   // 作成した画像を先にコピー(クリップボード書き込みはユーザー操作の中で開始する必要がある)
-  let copied = Promise.resolve(false);
-  if (navigator.clipboard && window.ClipboardItem) {
-    const item = new ClipboardItem({ 'image/png': new Promise(res => cv.toBlob(res, 'image/png')) });
-    copied = navigator.clipboard.write([item]).then(() => true, () => false);
-  }
+  const copied = copyImage();
   if (isMobile) location.href = u.href;
   else window.open(u.href, '_blank', 'noopener,noreferrer');
   copied.then(ok => say(ok

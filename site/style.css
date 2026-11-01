@@ -31,3 +31,7 @@ main{padding:.5rem}
 input,textarea,button{font-size:16px}
 }
 @media(max-width:480px){.grid{grid-template-columns:1fr}}
+.combo{position:relative}
+.suggest{position:absolute;left:0;right:0;top:100%;z-index:10;margin:0;padding:0;list-style:none;max-height:14rem;overflow-y:auto;background:#fff;border:1px solid #888;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.suggest li{padding:.55rem .6rem;font-size:1rem;border-bottom:1px solid #eee;cursor:pointer}
+.suggest li:hover{background:#e6f0fa}

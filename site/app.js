@@ -5,10 +5,6 @@ const MAX_STATIONS = 30;
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const listEl = document.getElementById('list');
-const dl = document.createElement('datalist');
-dl.id = 'station-names';
-TOKYO_STATIONS.forEach(n => dl.append(Object.assign(document.createElement('option'), { value: n })));
-document.body.append(dl);
 
 let stations = [
   { name: '日吉', num: '13', min: '12', passed: false, tr: '' },
@@ -159,15 +155,42 @@ function mk(tag, props, ...kids) {
 
 function field(label, input) { return mk('label', {}, label, input); }
 
+// 駅名の候補プルダウン(フォーカスで一覧、入力で絞り込み)
+function combo(input, onPick) {
+  const box = mk('div', { className: 'combo' });
+  const ul = mk('ul', { className: 'suggest', hidden: true });
+  ul.setAttribute('role', 'listbox');
+  box.append(input, ul);
+  let showAll = true;
+  const refresh = () => {
+    const q = input.value.trim();
+    const hits = TOKYO_STATIONS.filter(n => showAll || !q || n.includes(q)).slice(0, 60);
+    ul.replaceChildren(...hits.map(n => {
+      const li = mk('li', { textContent: n });
+      li.setAttribute('role', 'option');
+      li.addEventListener('pointerdown', ev => {
+        ev.preventDefault();
+        input.value = n; onPick(n); ul.hidden = true;
+      });
+      return li;
+    }));
+    ul.hidden = hits.length === 0;
+  };
+  input.addEventListener('focus', () => { showAll = true; refresh(); });
+  input.addEventListener('input', () => { showAll = false; onPick(input.value); refresh(); });
+  input.addEventListener('blur', () => { ul.hidden = true; });
+  input.addEventListener('keydown', ev => { if (ev.key === 'Escape') ul.hidden = true; });
+  return box;
+}
+
 function buildList() {
   listEl.replaceChildren();
   stations.forEach((st, i) => {
     const radio = mk('input', { type: 'radio', name: 'next', checked: i === nextIdx, title: '次の駅' });
     radio.addEventListener('change', () => { nextIdx = i; render(); });
     const name = mk('input', { type: 'text', maxLength: 12, value: st.name, placeholder: '駅名を入力して検索' });
-    name.setAttribute('list', 'station-names');
     name.autocomplete = 'off';
-    name.addEventListener('input', () => { st.name = name.value; render(); });
+    const nameBox = combo(name, v => { st.name = v; render(); });
     const num = mk('input', { type: 'text', maxLength: 3, value: st.num });
     num.addEventListener('input', () => { st.num = num.value; render(); });
     const min = mk('input', { type: 'text', maxLength: 3, value: st.min });
@@ -183,7 +206,7 @@ function buildList() {
     const del = mk('button', { type: 'button', textContent: '削除', title: '削除' });
     del.addEventListener('click', () => remove(i));
     const row = mk('div', { className: 'row' },
-      field('次', radio), field('駅名', name), field('番号', num), field('所要分', min),
+      field('次', radio), field('駅名', nameBox), field('番号', num), field('所要分', min),
       field('乗換 (改行区切り)', tr),
       mk('div', { className: 'btns' }, up, dn, del));
     const pl = field('通過済(灰色)', pass); pl.className = 'chk';
@@ -241,8 +264,15 @@ document.getElementById('x').addEventListener('click', () => {
   const text = `${val('dest')} 車内案内図を作りました #車内案内図メーカー（仮）`;
   const u = new URL('https://x.com/intent/post');
   u.searchParams.set('text', text);
-  // ユーザー操作中に同期的に開く(ポップアップブロック回避)
-  window.open(u.href, '_blank', 'noopener,noreferrer');
+  if (isMobile) {
+    // アプリを直接起動。起動できなければWeb版へ
+    const t = setTimeout(() => { if (!document.hidden) location.href = u.href; }, 1200);
+    document.addEventListener('visibilitychange', () => clearTimeout(t), { once: true });
+    location.href = 'twitter://post?message=' + encodeURIComponent(text);
+  } else {
+    // ユーザー操作中に同期的に開く(ポップアップブロック回避)
+    window.open(u.href, '_blank', 'noopener,noreferrer');
+  }
   // 画像は自動コピーし、投稿欄での貼り付けで添付できる
   if (navigator.clipboard && window.ClipboardItem) {
     const item = new ClipboardItem({ 'image/png': new Promise(res => cv.toBlob(res, 'image/png')) });

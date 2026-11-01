@@ -9,7 +9,7 @@ apt-get install -y apache2
 a2enmod headers >/dev/null
 
 install -d -m 0755 "$DEST"
-install -m 0644 "$SRC"/index.html "$SRC"/stations.js "$SRC"/lines.js "$SRC"/app.js "$SRC"/style.css "$SRC"/ogp.png "$DEST"/
+install -m 0644 "$SRC"/index.html "$SRC"/stations.js "$SRC"/lines.js "$SRC"/app.js "$SRC"/style.css "$DEST"/
 
 cat > /etc/apache2/conf-available/train-guide.conf <<'CONF'
 ServerTokens Prod

@@ -2,7 +2,6 @@
 const W = 1280, H = 720, S = 3;
 const FONT = '"Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif';
 const MAX_STATIONS = 30;
-const SITE_URL = 'https://kommet.github.io/train-guide-maker_flat/';
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const listEl = document.getElementById('list');
@@ -321,7 +320,6 @@ document.getElementById('x').addEventListener('click', () => {
   const text = '車内案内図を作りました #車内案内図メーカー（仮）';
   const u = new URL('https://x.com/intent/post');
   u.searchParams.set('text', text);
-  u.searchParams.set('url', SITE_URL);
   // 作成した画像を先にコピー(クリップボード書き込みはユーザー操作の中で開始する必要がある)
   let copied = Promise.resolve(false);
   if (navigator.clipboard && window.ClipboardItem) {
@@ -331,7 +329,7 @@ document.getElementById('x').addEventListener('click', () => {
   if (isMobile) location.href = u.href;
   else window.open(u.href, '_blank', 'noopener,noreferrer');
   copied.then(ok => say(ok
-    ? '作成した画像をコピーしました。Xの投稿欄で貼り付けると画像が載ります。'
+    ? '作成した画像をコピーしました。Xの投稿欄で貼り付けてください。'
     : '画像をダウンロードして添付してください。'));
 });
 

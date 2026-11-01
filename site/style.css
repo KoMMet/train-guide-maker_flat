@@ -44,3 +44,4 @@ input,textarea,button{font-size:16px}
 .modal-body h4{grid-column:1/-1;margin:.6rem 0 0;padding:.2rem .4rem;background:#e6f0fa;border-left:4px solid #0068b7}
 .modal-body p{grid-column:1/-1}
 .item{padding:.6rem .4rem;min-height:44px}
+.note{flex-basis:100%;margin:0;font-size:.85rem;color:#555}

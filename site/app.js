@@ -322,16 +322,17 @@ document.getElementById('x').addEventListener('click', () => {
   const u = new URL('https://x.com/intent/post');
   u.searchParams.set('text', text);
   u.searchParams.set('url', SITE_URL);
-  if (isMobile) {
-    // アプリを直接起動。起動できなければWeb版へ
-    const t = setTimeout(() => { if (!document.hidden) location.href = u.href; }, 1200);
-    document.addEventListener('visibilitychange', () => clearTimeout(t), { once: true });
-    location.href = 'twitter://post?message=' + encodeURIComponent(text + '\n' + SITE_URL);
-  } else {
-    // ユーザー操作中に同期的に開く(ポップアップブロック回避)
-    window.open(u.href, '_blank', 'noopener,noreferrer');
+  // 作成した画像を先にコピー(クリップボード書き込みはユーザー操作の中で開始する必要がある)
+  let copied = Promise.resolve(false);
+  if (navigator.clipboard && window.ClipboardItem) {
+    const item = new ClipboardItem({ 'image/png': new Promise(res => cv.toBlob(res, 'image/png')) });
+    copied = navigator.clipboard.write([item]).then(() => true, () => false);
   }
-  say('Xの投稿画面を開きました。サイトのリンクカードに画像が表示されます。作成した画像は「ダウンロード」または「画像をコピー」で添付できます。');
+  if (isMobile) location.href = u.href;
+  else window.open(u.href, '_blank', 'noopener,noreferrer');
+  copied.then(ok => say(ok
+    ? '作成した画像をコピーしました。Xの投稿欄で貼り付けると画像が載ります。'
+    : '画像をダウンロードして添付してください。'));
 });
 
 buildList();

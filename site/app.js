@@ -319,6 +319,7 @@ document.getElementById('x').addEventListener('click', () => {
   const text = 'これが最高の線路 #車内案内図メーカー（仮）';
   const u = new URL('https://x.com/intent/post');
   u.searchParams.set('text', text);
+  u.searchParams.set('url', location.origin + location.pathname);
   // 作成した画像を先にコピー(クリップボード書き込みはユーザー操作の中で開始する必要がある)
   let copied = Promise.resolve(false);
   if (navigator.clipboard && window.ClipboardItem) {
